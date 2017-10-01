@@ -16,11 +16,10 @@ if [ -z "$destination" ]; then
 fi
 
 
-payload=$(mktemp $TMPDIR/bosh-creds.XXXXXX)
+payload=$(mktemp "$TMPDIR/bosh-creds.XXXXXX")
 
-cat > $payload <&0
+cat > "$payload" <&0
 
-pcf_ert_domain=$(jq -r '.source.pcf_ert_domain // ""' < $payload)
 pcf_opsman_admin_username=$(jq -r '.source.pcf_opsman_admin_username // ""' < $payload)
 pcf_opsman_admin_password=$(jq -r '.source.pcf_opsman_admin_password // ""' < $payload)
 opsman_url=$(jq -r '.source.opsman_url // ""' < $payload)
@@ -31,16 +30,32 @@ CURL="om --target https://${opsman_url} -k \
   curl"
 
 # Get user, pass and CA cert
-$CURL --path=/api/v0/security/root_ca_certificate | jq -r .root_ca_certificate_pem > $destination/bosh-ca.pem
+$CURL --path=/api/v0/security/root_ca_certificate | jq -r .root_ca_certificate_pem > "$destination/bosh-ca.pem"
 
 $CURL --path=/api/v0/deployed/director/credentials/director_credentials > creds.json
 
-cat creds.json | jq -r .credential.value.identity > $destination/bosh-username
-cat creds.json | jq -r .credential.value.password > $destination/bosh-pass
+jq -r .credential.value.identity > "$destination/bosh-username" < creds.json
+jq -r .credential.value.password > "$destination/bosh-pass" < creds.json
 
 # Get Director ip
 director_id=$($CURL --path=/api/v0/deployed/products | jq -r ".[].guid" | grep p-bosh)
 
-$CURL --path=/api/v0/deployed/products/$director_id/static_ips | jq -r .[0].ips[0] > $destination/director_ip
+$CURL --path="/api/v0/deployed/products/$director_id/static_ips" | jq -r .[0].ips[0] > "$destination/director_ip"
+
+# In PCF 1.12 there is a new endpoint with credentials to use with BOSH CLIv2
+set +e
+$CURL --path=/api/v0/deployed/director/credentials/bosh2_commandline_credentials > "$destination/bosh2_commandline_credentials.tmp"
+# shellcheck disable=SC2181
+if [[ "$?" = "0" ]]; then
+  jq -r .credential < "$destination/bosh2_commandline_credentials.tmp" | awk '{printf "export %s\nexport %s\nexport %s\n", $1, $2, $4}' > "$destination/bosh2_commandline_credentials"
+  {
+    echo "export BOSH_CA_CERT=$'"
+    cat "$destination/bosh-ca.pem"
+    echo "'"
+  } >> "$destination/bosh2_commandline_credentials"
+
+fi
+rm -f "$destination/bosh2_commandline_credentials.tmp"
+set -e
 
 echo '{"version": {"ref": "123"}}' >&3
