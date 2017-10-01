@@ -33,19 +33,30 @@ Then add the resource to your job:
   - aggregate:
     # ...
     - get: om-bosh-creds
+      params:
+        deployment: my_deployment
 ```
 
-Then you will find 5 files:
+`deployment` param is optional -- it is added to the bosh_source.json for use with [bosh-deployment resource](https://github.com/cloudfoundry/bosh-deployment-resource).
+
+Then you will the following files:
 ```
 - om-bosh-creds/bosh-ca.pem
 - om-bosh-creds/director_ip
 - om-bosh-creds/bosh-username
 - om-bosh-creds/bosh-pass
+- om-bosh-creds/bosh-deployment
 - om-bosh-creds/bosh2_commandline_credentials
+- om-bosh-creds/bosh_source.json
 ```
 
-The first four files are there for backwards compatibility. Starting with PCF 1.12 there is a new endpoint which provides credentials to be used by BOSH CLI v2.
-Just `source om-bosh-creds/bosh2_commandline_credentials` in your task script and you can perform operations with BOSH CLI (no need to run `bosh login`).
+The first four files are there for backwards compatibility with the original `bosh-creds-resource` by [Diego Lapiduz](http://github.com/dlapiduz/).
+
+Starting with PCF 1.12 there is a new endpoint which provides credentials to be used by BOSH CLI v2 and `bosh2_commandline_credentials` contains credentials from that endpoint in an easy to consume way - just `source om-bosh-creds/bosh2_commandline_credentials` in your task script and you can perform operations with BOSH CLI (no need to even `bosh login`).
+
+Note: `bosh2_commandline_credentials` resturn a different set of credentials and therefore the credentials in `bosh-username` and `bosh-pass` will differ from those in `bosh2_commandline_credentials`.
+
+`bosh_source.json` contains the same credentials as `bosh2_commandline_credentials`, plus the deployment name provided as a param. The format of this file is compatible with [bosh-deployment resource](https://github.com/cloudfoundry/bosh-deployment-resource).
 
 ### Known issues:
 

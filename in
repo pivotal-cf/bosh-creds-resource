@@ -15,7 +15,6 @@ if [ -z "$destination" ]; then
   exit 1
 fi
 
-
 payload=$(mktemp "$TMPDIR/bosh-creds.XXXXXX")
 
 cat > "$payload" <&0
@@ -30,12 +29,16 @@ CURL="om --target https://${opsman_url} -k \
   curl"
 
 # Get user, pass and CA cert
-$CURL --path=/api/v0/security/root_ca_certificate | jq -r .root_ca_certificate_pem > "$destination/bosh-ca.pem"
+CA_CERT=$($CURL --path=/api/v0/security/root_ca_certificate | jq -r .root_ca_certificate_pem)
+echo "$CA_CERT" > "$destination/bosh-ca.pem"
 
 $CURL --path=/api/v0/deployed/director/credentials/director_credentials > creds.json
 
-jq -r .credential.value.identity > "$destination/bosh-username" < creds.json
-jq -r .credential.value.password > "$destination/bosh-pass" < creds.json
+jq -r .credential.value.identity < creds.json > "$destination/bosh-username"
+jq -r .credential.value.password < creds.json > "$destination/bosh-pass"
+
+BOSH_DEPLOYMENT=$(jq -r '.params.deployment // ""' < $payload)
+echo "$BOSH_DEPLOYMENT" > "$destination/bosh-deployment"
 
 # Get Director ip
 director_id=$($CURL --path=/api/v0/deployed/products | jq -r ".[].guid" | grep p-bosh)
@@ -54,8 +57,16 @@ if [[ "$?" = "0" ]]; then
     echo "'"
   } >> "$destination/bosh2_commandline_credentials"
 
+  # shellcheck disable=1090
+  source "$destination/bosh2_commandline_credentials"
+  
+  CA_CERT=$($CURL --path=/api/v0/security/root_ca_certificate | jq .root_ca_certificate_pem)
+  # [BOSH Deployment Resource](https://github.com/cloudfoundry/bosh-deployment-resource) supports dynamic configuration through a JSON file
+  # Let's create such a file so that the resource can be used for deployment
+  echo "{ \"target\": \"$BOSH_ENVIRONMENT\", \"client\": \"$BOSH_CLIENT\", \"client_secret\": \"$BOSH_CLIENT_SECRET\", \"ca_cert\": $CA_CERT, \"deployment\": \"$BOSH_DEPLOYMENT\" }" > "$destination/bosh_source.json"
 fi
-rm -f "$destination/bosh2_commandline_credentials.tmp"
 set -e
+
+rm -f "$destination/bosh2_commandline_credentials.tmp"
 
 echo '{"version": {"ref": "123"}}' >&3
