@@ -63,9 +63,23 @@ if [[ "$?" = "0" ]]; then
   CA_CERT=$($CURL --path=/api/v0/security/root_ca_certificate | jq .root_ca_certificate_pem)
   # [BOSH Deployment Resource](https://github.com/cloudfoundry/bosh-deployment-resource) supports dynamic configuration through a JSON file
   # Let's create such a file so that the resource can be used for deployment
-  echo "{ \"target\": \"$BOSH_ENVIRONMENT\", \"client\": \"$BOSH_CLIENT\", \"client_secret\": \"$BOSH_CLIENT_SECRET\", \"ca_cert\": $CA_CERT, \"deployment\": \"$BOSH_DEPLOYMENT\" }" > "$destination/bosh_source.json"
+  echo "{ \"target\": \"$BOSH_ENVIRONMENT\", \"client\": \"$BOSH_CLIENT\", \"client_secret\": \"$BOSH_CLIENT_SECRET\", \"ca_cert\": $CA_CERT, \"deployment\": \"$BOSH_DEPLOYMENT\" }" > "$destination/opsman_bosh.json"
 fi
 set -e
+
+external_bosh_address=$(jq -r '.source.external_bosh_address // ""' < $payload)
+if [[ ${external_bosh_address} ]]; then
+  external_bosh_client=$(jq -r '.source.external_bosh_client // ""' < $payload)
+  external_bosh_client_secret=$(jq -r '.source.external_bosh_client_secret // ""' < $payload)
+  external_bosh_ca_cert=$(jq '.source.external_bosh_ca_cert // ""' < $payload)
+
+  echo "{ \"target\": \"${external_bosh_address}\", \"client\": \"${external_bosh_client}\", \"client_secret\": \"${external_bosh_client_secret}\", \"ca_cert\": ${external_bosh_ca_cert}, \"deployment\": \"$BOSH_DEPLOYMENT\" }" > "$destination/external_bosh.json"
+fi
+
+# Create a YAML file that can be used as BOSH var file (also by bosh-deployment resource)
+echo "bosh_url: " $(cat "$destination/director_ip") > "$destination/pcf_bosh_director.yml"
+echo "bosh_ca_cert: |" >> "$destination/pcf_bosh_director.yml"
+sed 's/^/  /g' < "$destination/bosh-ca.pem" >> "$destination/pcf_bosh_director.yml"
 
 rm -f "$destination/bosh2_commandline_credentials.tmp"
 
