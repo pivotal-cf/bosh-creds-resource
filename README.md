@@ -1,6 +1,6 @@
 ## Concourse Resource for BOSH Credentials
 
-This resource connects to Ops Manager and obtains the bosh credentials.
+This resource connects to Ops Manager and obtains BOSH credentials.
 
 ### How to use it?
 
@@ -39,7 +39,7 @@ Then add the resource to your job:
 
 `deployment` param is optional -- it is added to the bosh_source.json for use with [bosh-deployment resource](https://github.com/cloudfoundry/bosh-deployment-resource).
 
-Then you will the following files:
+Then you will get the following files:
 ```
 - om-bosh-creds/bosh-ca.pem
 - om-bosh-creds/director_ip
@@ -54,7 +54,7 @@ The first four files are there for backwards compatibility with the original `bo
 
 Starting with PCF 1.12 there is a new endpoint which provides credentials to be used by BOSH CLI v2 and `bosh2_commandline_credentials` contains credentials from that endpoint in an easy to consume way - just `source om-bosh-creds/bosh2_commandline_credentials` in your task script and you can perform operations with BOSH CLI (no need to even `bosh login`).
 
-Note: `bosh2_commandline_credentials` resturn a different set of credentials and therefore the credentials in `bosh-username` and `bosh-pass` will differ from those in `bosh2_commandline_credentials`.
+Note: `bosh2_commandline_credentials` returns a different set of credentials and therefore the credentials in `bosh-username` and `bosh-pass` will differ from those in `bosh2_commandline_credentials`.
 
 `opsman_bosh.json` contains the same credentials as `bosh2_commandline_credentials`, plus the deployment name provided as a param but the format of this file is compatible with [bosh-deployment resource](https://github.com/cloudfoundry/bosh-deployment-resource).
 
@@ -76,7 +76,6 @@ In your plan:
 ```
  - put: bosh-deployment
     params:
-      # FIXME
       source_file: pcf-bosh-creds/((director_for_deployment)).json
 ```
 And then in your pipeline parameter file either:
