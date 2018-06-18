@@ -59,7 +59,7 @@ if [[ "$?" = "0" ]]; then
 
   # shellcheck disable=1090
   source "$destination/bosh2_commandline_credentials"
-  
+
   CA_CERT=$($CURL --path=/api/v0/security/root_ca_certificate | jq .root_ca_certificate_pem)
   # [BOSH Deployment Resource](https://github.com/cloudfoundry/bosh-deployment-resource) supports dynamic configuration through a JSON file
   # Let's create such a file so that the resource can be used for deployment
@@ -72,8 +72,16 @@ if [[ ${external_bosh_address} ]]; then
   external_bosh_client=$(jq -r '.source.external_bosh_client // ""' < $payload)
   external_bosh_client_secret=$(jq -r '.source.external_bosh_client_secret // ""' < $payload)
   external_bosh_ca_cert=$(jq '.source.external_bosh_ca_cert // ""' < $payload)
+  external_bosh_ca_cert_multiline=$(jq -r '.source.external_bosh_ca_cert // ""' < $payload)
 
   echo "{ \"target\": \"${external_bosh_address}\", \"client\": \"${external_bosh_client}\", \"client_secret\": \"${external_bosh_client_secret}\", \"ca_cert\": ${external_bosh_ca_cert}, \"deployment\": \"$BOSH_DEPLOYMENT\" }" > "$destination/external_bosh.json"
+
+  {
+    echo "export BOSH_ENVIRONMENT=${external_bosh_address}";
+    echo "export BOSH_CLIENT=${external_bosh_client}";
+    echo "export BOSH_CLIENT_SECRET=${external_bosh_client_secret}";
+    echo "export BOSH_CA_CERT=\"${external_bosh_ca_cert_multiline}\"";
+  } > "$destination/external_bosh.sh"
 fi
 
 # Create a YAML file that can be used as BOSH var file (also by bosh-deployment resource)
