@@ -96,6 +96,17 @@ external_bosh_ca_cert: |
   -----END CERTIFICATE-----
 ```
 
+# Proxying BOSH through Proxy
+You can add the following parameters to your get to have the `BOSH_ALL_PROXY` variable included in your `bosh2_commandline_credentials` file and jumpbox variables in the `opsman_bosh.json` and `external_bosh.json`:
+
+`jumpbox_url` contains the FQDN to jump into for bosh commands
+
+`jumpbox_port` is the port SSH is bound to (defaults to 22).
+
+`jumpbox_user` is the user to connect to the Jumpbox with.
+
+`jumpbox_ssh_key` is the SSH key to authorize the user into the Jumpbox.
+
 ### Known issues:
 
 Currently the resource only gets credentials once, it doesn't update the credentials if they are changed.
