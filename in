@@ -27,7 +27,7 @@ jumpbox_url=$(jq -r '.source.jumpbox_url // ""' < $payload)
 jumpbox_port=$(jq -r '.source.jumpbox_port // 22' < $payload)
 jumpbox_ssh_key=$(jq -r '.source.jumpbox_ssh_key // ""' < $payload)
 jumpbox_ssh_key_escaped=$(jq '.source.jumpbox_ssh_key // ""' < $payload)
-jumpbox_user=$(jq -r '.source.jumpbox_user // ""' < $payload)
+jumpbox_username=$(jq -r '.source.jumpbox_username // ""' < $payload)
 
 CURL="om --target https://${opsman_url} -k \
   --username $pcf_opsman_admin_username \
@@ -68,7 +68,7 @@ if [[ "$?" = "0" ]]; then
       echo 'jumpbox_ssh_key="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"/jumpbox.key'
       echo "echo $'$jumpbox_ssh_key' > \$jumpbox_ssh_key"
       echo 'chmod 600 $jumpbox_ssh_key'
-      echo "export BOSH_ALL_PROXY=ssh+socks5://${jumpbox_user}@${jumpbox_url}:22?private-key=\$jumpbox_ssh_key"
+      echo "export BOSH_ALL_PROXY=ssh+socks5://${jumpbox_username}@${jumpbox_url}:22?private-key=\$jumpbox_ssh_key"
     } >> "$destination/bosh2_commandline_credentials"
   fi
 
@@ -78,7 +78,7 @@ if [[ "$?" = "0" ]]; then
   CA_CERT=$($CURL --path=/api/v0/security/root_ca_certificate | jq .root_ca_certificate_pem)
   # [BOSH Deployment Resource](https://github.com/cloudfoundry/bosh-deployment-resource) supports dynamic configuration through a JSON file
   # Let's create such a file so that the resource can be used for deployment
-  echo "{ \"target\": \"$BOSH_ENVIRONMENT\", \"client\": \"$BOSH_CLIENT\", \"client_secret\": \"$BOSH_CLIENT_SECRET\", \"ca_cert\": $CA_CERT, \"deployment\": \"$BOSH_DEPLOYMENT\", \"jumpbox_url\": \"$jumpbox_url:$jumpbox_port\", \"jumpbox_username\": \"$jumpbox_user\", \"jumpbox_ssh_key\": $jumpbox_ssh_key_escaped }" > "$destination/opsman_bosh.json"
+  echo "{ \"target\": \"$BOSH_ENVIRONMENT\", \"client\": \"$BOSH_CLIENT\", \"client_secret\": \"$BOSH_CLIENT_SECRET\", \"ca_cert\": $CA_CERT, \"deployment\": \"$BOSH_DEPLOYMENT\", \"jumpbox_url\": \"$jumpbox_url:$jumpbox_port\", \"jumpbox_username\": \"$jumpbox_username\", \"jumpbox_ssh_key\": $jumpbox_ssh_key_escaped }" > "$destination/opsman_bosh.json"
 fi
 set -e
 
@@ -89,7 +89,7 @@ if [[ ${external_bosh_address} ]]; then
   external_bosh_ca_cert=$(jq '.source.external_bosh_ca_cert // ""' < $payload)
   external_bosh_ca_cert_multiline=$(jq -r '.source.external_bosh_ca_cert // ""' < $payload)
 
-  echo "{ \"target\": \"${external_bosh_address}\", \"client\": \"${external_bosh_client}\", \"client_secret\": \"${external_bosh_client_secret}\", \"ca_cert\": ${external_bosh_ca_cert}, \"deployment\": \"$BOSH_DEPLOYMENT\", \"jumpbox_url\": \"$jumpbox_url:$jumpbox_port\", \"jumpbox_username\": \"$jumpbox_user\", \"jumpbox_ssh_key\": $jumpbox_ssh_key_escaped }" > "$destination/external_bosh.json"
+  echo "{ \"target\": \"${external_bosh_address}\", \"client\": \"${external_bosh_client}\", \"client_secret\": \"${external_bosh_client_secret}\", \"ca_cert\": ${external_bosh_ca_cert}, \"deployment\": \"$BOSH_DEPLOYMENT\", \"jumpbox_url\": \"$jumpbox_url:$jumpbox_port\", \"jumpbox_username\": \"$jumpbox_username\", \"jumpbox_ssh_key\": $jumpbox_ssh_key_escaped }" > "$destination/external_bosh.json"
 
   {
     echo "export BOSH_ENVIRONMENT=${external_bosh_address}";

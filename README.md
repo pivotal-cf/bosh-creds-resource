@@ -103,7 +103,7 @@ You can add the following parameters to your get to have the `BOSH_ALL_PROXY` va
 
 `jumpbox_port` is the port SSH is bound to (defaults to 22).
 
-`jumpbox_user` is the user to connect to the Jumpbox with.
+`jumpbox_username` is the user to connect to the Jumpbox with.
 
 `jumpbox_ssh_key` is the SSH key to authorize the user into the Jumpbox.
 
