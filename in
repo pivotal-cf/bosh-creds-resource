@@ -53,7 +53,7 @@ $CURL --path="/api/v0/deployed/products/$director_id/static_ips" | jq -r .[0].ip
 
 # In PCF 1.12 there is a new endpoint with credentials to use with BOSH CLIv2
 set +e
-$CURL --path=/api/v0/deployed/director/credentials/bosh2_commandline_credentials > "$destination/bosh2_commandline_credentials.tmp"
+$CURL --path=/api/v0/deployed/director/credentials/bosh_commandline_credentials > "$destination/bosh2_commandline_credentials.tmp"
 # shellcheck disable=SC2181
 if [[ "$?" = "0" ]]; then
   jq -r .credential < "$destination/bosh2_commandline_credentials.tmp" | awk '{printf "export %s\nexport %s\nexport %s\n", $1, $2, $4}' > "$destination/bosh2_commandline_credentials"
