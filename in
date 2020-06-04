@@ -24,7 +24,7 @@ pcf_opsman_admin_password=$(jq -r '.source.pcf_opsman_admin_password // ""' < $p
 opsman_url=$(jq -r '.source.opsman_url // ""' < $payload)
 
 jumpbox_url=$(jq -r '.source.jumpbox_url // ""' < $payload)
-jumpbox_port=$(jq -r '.source.jumpbox_port // 22' < $payload)
+jumpbox_port=$(jq -r '.source.jumpbox_port // ""' < $payload)
 jumpbox_ssh_key=$(jq -r '.source.jumpbox_ssh_key // ""' < $payload)
 jumpbox_ssh_key_escaped=$(jq '.source.jumpbox_ssh_key // ""' < $payload)
 jumpbox_username=$(jq -r '.source.jumpbox_username // ""' < $payload)
